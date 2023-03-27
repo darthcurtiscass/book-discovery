@@ -1,14 +1,9 @@
 const { User, Book } = require("../models");
+const { signToken } = require("../utils/auth");
+const {AuthenticationError} = require("apollo-server-express");
 
 const resolvers = {
   Query: {
-    user: async () => {
-      return User.find({});
-    },
-    books: async (parent, { _id }) => {
-      const params = _id ? { _id } : {};
-      return User.find(params);
-    },
     me: async (parent, args, context) => {
       if (context.user) {
         return User.findOne({ _id: context.user._id }).populate("savedBooks");
@@ -39,13 +34,14 @@ const resolvers = {
 
       return { token, user };
     },
-    saveBook: async (parent, { authors, description, title, bookId, image, link }, context) => {
+    saveBook: async (parent, { bookData }, context) => {
+     try {
       if (context.user) {
         return User.findOneAndUpdate(
           { _id: context.user._id },
           {
             $addToSet: {
-              savedBooks: { authors, description, title, bookId, image, link },
+              savedBooks: { ...bookData },
             },
           },
           {
@@ -54,7 +50,11 @@ const resolvers = {
           }
         );
       }
-      throw new AuthenticationError("user not logged in");
+     } catch(err) {
+      console.log(err)
+      throw new AuthenticationError("error saving book");
+     }
+     
     },
     removeBook: async (parent , {bookId}, context) => {
       if (context.user) {
@@ -63,7 +63,7 @@ const resolvers = {
           {
             $pull: {
               savedBooks: {
-                _id: bookId,
+                bookId: bookId,
               },
             },
           }
