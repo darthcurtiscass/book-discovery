@@ -21,8 +21,8 @@ const SavedBooks = () => {
       {query: GET_ME}
     ]
   })
-
-  const userData = data?.me || {}
+  console.log(data)
+  const userData = data?.me || {savedBooks:[]}
 
 
   // create function that accepts the book's mongo _id value as param and deletes the book from the database
